@@ -30,6 +30,7 @@
 #include <stack>
 #include <trace_helpers.h>
 #include <kiplatform/ui.h>
+#include <kicadgym/native_action_logger.h>
 #include <app_monitor.h>
 
 #include <wx/event.h>
@@ -338,6 +339,7 @@ bool TOOL_MANAGER::doRunAction( const TOOL_ACTION& aAction, bool aNow, const ki:
     if( m_shuttingDown )
         return true;
 
+    const uint64_t nativeInteractionId = KICADGYM::BeginNativeCommand( aAction.GetName() );
     bool       retVal = false;
     TOOL_EVENT event = aAction.MakeEvent();
 
@@ -399,6 +401,8 @@ bool TOOL_MANAGER::doRunAction( const TOOL_ACTION& aAction, bool aNow, const ki:
         PostEvent( event );
     }
 
+    KICADGYM::FinishNativeCommand( nativeInteractionId, aAction.GetName(),
+                                   aAction.GetFriendlyName(), aNow ? retVal : true, !aNow );
     return retVal;
 }
 

@@ -1,5 +1,60 @@
 # KiCad README
 
+## KiCadGym release identity
+
+KiCadGym package `1.0.0` tracks the official KiCad `10.0` stable maintenance line. Its current
+source base is KiCad `10.0.5` plus stable maintenance commits at
+`8709bb1f26e3e088c71b600df9c413ff89554612`. The package manifest records the integration version
+and upstream application identity separately. Development builds must not silently track KiCad
+`master` or infer a version from a local executable.
+
+The Windows install tree is self-contained. In addition to KiCad and vcpkg runtime DLLs it ships
+the embedded Python 3.11 executable, standard library, encodings, extension DLLs, and
+`site-packages`. This is required because stable KiCad initializes Python relative to its installed
+executable directory.
+
+Use `kicad-cli version` to verify the application build. GUI executables such as `pcbnew.exe` are
+not CLI probes and must not be started with `--help`.
+
+The stable Windows configure requires SWIG 4 or newer. The current workspace uses the SWIG binary
+from FreeCADGym's Pixi environment and configures with `VCPKG_MANIFEST_INSTALL=OFF` against the
+already provisioned vcpkg tree.
+
+## KiCadGym native action capture
+
+KiCadGym emits `rl_env.native_action.v1` JSONL through the common RL environment contract:
+
+- `RL_ENV_KIND=kicadgym`
+- `RL_ENV_SESSION_ID=<session id>`
+- `RL_ENV_NATIVE_ACTION_CONTROL_FILE=<control file containing the active JSONL path>`
+
+A global wxWidgets event filter captures clickable controls and editable properties. The tool
+manager records completed KiCad commands, while schematic and board commits record explicitly
+linked artifact transactions. Desktop owns recording boundaries, checkpoints, semantic grouping,
+and verifier/reward authoring.
+
+The visible-action catalog covers menus, tools, buttons, text and numeric inputs, choices,
+property-grid rows, grids, data views, trees, tabs, and canvas pointer/wheel interactions. The
+semantic matrix includes PCB route/drag/tuning/zone/via/track/footprint/pad/rules/DRC, schematic
+symbols/properties/connectivity/hierarchy/ERC/simulation/footprint assignment, Symbol Editor,
+Footprint Editor, Gerber Viewer, 3D Viewer, Page Layout Editor, Image Converter, Calculator,
+fabrication export, project jobs, and plugins. Each action exposes stable IDs and verifier
+bindings, while board and schematic commits carry an explicit parent interaction ID.
+
+Native regression coverage lives in
+`qa/tests/common/test_kicadgym_native_action_catalog.cpp`. It checks the editor/canvas semantic
+matrix and writes a real routed-command plus board-commit JSONL trace. Desktop's
+`scripts/smoke-local-rl-env-packages.mjs --kicadgym-only` launches the installed package and
+checks the live catalog, verifier execution, snapshot, reset, and recording artifact binding.
+`scripts/smoke-kicadgym-editor-catalog.mjs` then launches every standalone editor exposed by the
+KiCad manager and checks that each one publishes non-empty `kicadgym.ui_state.v1` with stable
+catalog, instance, and semantic IDs plus catalog/visible/enabled/invoked verifier bindings. Run it
+from `desktop` with `npm run smoke:kicadgym-editors` after installing a native build.
+
+The common native capture filter republishes the visible-action catalog after wxWidgets finishes
+showing and laying out any window. This keeps menus, panels, tabs, and dialogs current without
+per-editor timers or application-specific startup hooks.
+
 For specific documentation about [building KiCad](https://dev-docs.kicad.org/en/build/), policies
 and guidelines, and source code documentation see the
 [Developer Documentation](https://dev-docs.kicad.org) website.

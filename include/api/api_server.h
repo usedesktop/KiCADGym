@@ -98,6 +98,8 @@ private:
 
     bool m_readyToReply;
 
+    wxString m_socketPathOverride;
+
     static wxString s_logFileName;
 
     wxFileName m_logFilePath;

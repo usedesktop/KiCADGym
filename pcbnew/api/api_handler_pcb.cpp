@@ -268,10 +268,15 @@ HANDLER_RESULT<Empty> API_HANDLER_PCB::handleRevertDocument(
         return tl::unexpected( documentValidation.error() );
 
     wxFileName fn = frame()->Prj().AbsolutePath( frame()->GetBoard()->GetFileName() );
+    PCB_EDIT_FRAME* f = frame();
+    wxString        path = fn.GetFullPath();
 
-    frame()->GetScreen()->SetContentModified( false );
-    frame()->ReleaseFile();
-    frame()->OpenProjectFiles( std::vector<wxString>( 1, fn.GetFullPath() ), KICTL_REVERT );
+    f->GetScreen()->SetContentModified( false );
+    f->CallAfter( [f, path]()
+                  {
+                      f->ReleaseFile();
+                      f->OpenProjectFiles( std::vector<wxString>( 1, path ), KICTL_REVERT );
+                  } );
 
     return Empty();
 }

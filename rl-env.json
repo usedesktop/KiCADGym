@@ -1,0 +1,80 @@
+{
+  "schema": "usedesktop.rl_env_package.v2",
+  "manifest_version": 2,
+  "id": "kicadgym",
+  "display_name": "KiCadGym",
+  "package_version": "1.0.0",
+  "application": {
+    "name": "KiCad",
+    "version": "10.0.5",
+    "source_ref": "10.0",
+    "source_commit": "8709bb1f26e3e088c71b600df9c413ff89554612",
+    "release_channel": "stable"
+  },
+  "catalog": {
+    "domain": {
+      "id": "electronics_design",
+      "labels": { "en": "Electronics Design", "ko": "전자 설계" },
+      "descriptions": {
+        "en": "Schematics, PCB layout, verification, and fabrication workflows.",
+        "ko": "회로도, PCB 레이아웃, 검증 및 제조 워크플로."
+      }
+    },
+    "order": 30
+  },
+  "package_root": "build",
+  "runtime": {
+    "platforms": {
+      "windows": {
+        "app": {
+          "executable": "install/local-msvc-win64-release/bin/pcbnew.exe",
+          "args": []
+        },
+        "mcp": {
+          "executable": "install/local-msvc-win64-release/bin/mcp/kicadgym-mcp-server.exe",
+          "args": [],
+          "cwd": "install/local-msvc-win64-release/bin/mcp"
+        },
+        "path_prepend": ["local-msvc-win64-release/vcpkg_installed/x64-windows/bin"]
+      }
+    },
+    "bindings": {
+      "host": "KICAD_HOST",
+      "port": "KICAD_PORT",
+      "session_id": "KICADGYM_SESSION_ID",
+      "checkpoint_dir": "KICADGYM_CHECKPOINT_DIR"
+    }
+  },
+  "session": {
+    "checkpoint_extension": ".zip",
+    "native_action_capture": true,
+    "workspace_seed": {
+      "source": "install/local-msvc-win64-release/bin/mcp/kicadgym_empty.kicad_pcb",
+      "target": "baseline.kicad_pcb",
+      "append_to_app_args": true
+    }
+  },
+  "mcp_contract": {
+    "configure_artifacts_tool": "configure_session_artifacts",
+    "code_agent": {
+      "display_name": "KiCadGym",
+      "python_api": "kicad-python and KiCad official IPC APIs",
+      "submit_action_tool": "submit_kicad_action",
+      "code_tool": { "name": "execute_kicad_code", "argument": "code" },
+      "state_tool": "inspect_project_state",
+      "image_tool": null,
+      "dispatch_driver": "mcp_kicad_python",
+      "verifier_primitive": "kicad.project_state"
+    },
+    "session_control": {
+      "instruction_tool": "execute_kicad_code",
+      "snapshot_tool": "snapshot_session",
+      "restore_tool": "restore_session",
+      "reset_tool": "reset_session"
+    }
+  },
+  "parallelism": {
+    "supported": true,
+    "isolated_workspace": true
+  }
+}

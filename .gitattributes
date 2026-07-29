@@ -34,3 +34,5 @@ common/libeval/grammar.h    generated
 # Scripts
 *.sh    text eol=lf
 *.bat   text eol=crlf
+
+/.githooks/* text eol=lf

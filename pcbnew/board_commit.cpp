@@ -43,6 +43,7 @@
 #include <tools/pcb_actions.h>
 #include <connectivity/connectivity_data.h>
 #include <connectivity/connectivity_algo.h>
+#include <kicadgym/native_action_logger.h>
 #include <teardrop/teardrop.h>
 #include <pcb_board_outline.h>
 
@@ -675,6 +676,7 @@ void BOARD_COMMIT::Push( const wxString& aMessage, int aCommitFlags )
         }
     }
 
+    KICADGYM::RecordNativeTransaction( "pcb_editor", aMessage );
     clear();
 }
 

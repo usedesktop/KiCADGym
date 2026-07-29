@@ -997,6 +997,26 @@ elseif( VCPKG_TOOLCHAIN )
     set( PYTHON_DEST "${CMAKE_INSTALL_PREFIX}/bin/Lib/site-packages"
         CACHE PATH "Python module install path."
         )
+
+    if( MSVC )
+        get_filename_component( KICADGYM_PYTHON_RUNTIME_DIR "${PYTHON_EXECUTABLE}" DIRECTORY )
+
+        install( FILES
+            "${KICADGYM_PYTHON_RUNTIME_DIR}/python.exe"
+            "${KICADGYM_PYTHON_RUNTIME_DIR}/pythonw.exe"
+            DESTINATION bin
+            COMPONENT Runtime
+            )
+        install( DIRECTORY "${KICADGYM_PYTHON_RUNTIME_DIR}/Lib/"
+            DESTINATION bin/Lib
+            COMPONENT Runtime
+            PATTERN "__pycache__" EXCLUDE
+            )
+        install( DIRECTORY "${KICADGYM_PYTHON_RUNTIME_DIR}/DLLs/"
+            DESTINATION bin/DLLs
+            COMPONENT Runtime
+            )
+    endif()
 else()
     set( PYTHON_DEST "${PYTHON_SITE_PACKAGE_PATH}"
         CACHE PATH "Python module install path."
@@ -1256,6 +1276,14 @@ endif ( KICAD_INSTALL_DEMOS )
 # I18n Translations
 if( KICAD_BUILD_I18N )
     add_subdirectory( translation )
+endif()
+
+if( WIN32 AND DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET )
+    install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/"
+        DESTINATION "${KICAD_BIN}"
+        FILES_MATCHING PATTERN "*.dll"
+    )
 endif()
 
 if( APPLE )

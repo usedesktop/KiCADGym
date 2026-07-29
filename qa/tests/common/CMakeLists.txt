@@ -60,6 +60,7 @@ set( QA_COMMON_SRCS
     test_loop_safe_collect.cpp
     test_markup_parser.cpp
     test_kicad_string.cpp
+    test_kicadgym_native_action_catalog.cpp
     test_kicad_stroke_font.cpp
     test_outline_font.cpp
     test_dxf_plotter.cpp

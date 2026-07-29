@@ -1,0 +1,14 @@
+#!/bin/sh
+
+remote_name="$1"
+remote_url="$2"
+remote_key=$(printf '%s:%s' "$remote_name" "$remote_url" | tr '[:upper:]' '[:lower:]')
+
+case "$remote_key" in
+  upstream:*|*:https://github.com/kicad/kicad-source-mirror|*:https://github.com/kicad/kicad-source-mirror.git|*:git@github.com:kicad/kicad-source-mirror.git|*:ssh://git@github.com:kicad/kicad-source-mirror.git|*:https://gitlab.com/kicad/code/kicad|*:https://gitlab.com/kicad/code/kicad.git|*:git@gitlab.com:kicad/code/kicad.git|*:ssh://git@gitlab.com:kicad/code/kicad.git)
+    printf >&2 '\nBlocked push to the official KiCad repository (%s %s).\nPush KiCadGym work to origin/usedesktop only.\n\n' "$remote_name" "$remote_url"
+    exit 1
+    ;;
+esac
+
+exit 0

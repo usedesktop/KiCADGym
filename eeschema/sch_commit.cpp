@@ -34,6 +34,7 @@
 #include <view/view.h>
 #include <sch_commit.h>
 #include <connection_graph.h>
+#include <kicadgym/native_action_logger.h>
 
 #include <functional>
 #include <wx/log.h>
@@ -497,6 +498,7 @@ void SCH_COMMIT::Push( const wxString& aMessage, int aCommitFlags )
             frame->GetCanvas()->Refresh();
     }
 
+    KICADGYM::RecordNativeTransaction( "schematic_editor", aMessage );
     clear();
 }
 

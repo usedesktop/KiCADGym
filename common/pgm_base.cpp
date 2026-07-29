@@ -53,6 +53,7 @@
 #include <core/arraydim.h>
 #include <id.h>
 #include <kicad_curl/kicad_curl.h>
+#include <kicadgym/native_action_logger.h>
 #include <kiplatform/policy.h>
 #include <libraries/library_manager.h>
 #include <macros.h>
@@ -173,6 +174,7 @@ PGM_BASE::PGM_BASE()
 
 PGM_BASE::~PGM_BASE()
 {
+    KICADGYM::UninstallNativeActionCapture();
     HideSplash();
     Destroy();
 
@@ -356,6 +358,9 @@ bool PGM_BASE::InitPgm( bool aHeadless, bool aSkipPyInit, bool aIsUnitTest )
     APP_MONITOR::SENTRY::Instance()->AddTag( "kicad.app", pgm_name );
 
     wxInitAllImageHandlers();
+
+    if( !aHeadless )
+        KICADGYM::InstallNativeActionCapture();
 
 #if !wxCHECK_VERSION( 3, 3, 0 )
     // Without this the wxPropertyGridManager segfaults on Windows.

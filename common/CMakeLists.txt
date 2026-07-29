@@ -88,6 +88,8 @@ install( FILES
 # Functions and data all need to use the #include <import_export.h> and be declared
 # as APIEXPORT
 set( KICOMMON_SRCS
+    kicadgym/native_action_logger.cpp
+
     # Fonts
     newstroke_font.cpp
     font/fontconfig.cpp

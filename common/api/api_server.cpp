@@ -19,9 +19,11 @@
  */
 
 #include <fmt/format.h>
+#include <cstdlib>
 #include <wx/app.h>
 #include <wx/datetime.h>
 #include <wx/event.h>
+#include <wx/ffile.h>
 #include <wx/stdpaths.h>
 
 #include <advanced_config.h>
@@ -44,6 +46,32 @@
 using kiapi::common::ApiRequest, kiapi::common::ApiResponse, kiapi::common::ApiStatusCode;
 
 
+static void logGymApiStartup( const wxString& aMessage )
+{
+    const char* checkpointDir = std::getenv( "KICADGYM_CHECKPOINT_DIR" );
+    wxFileName logPath;
+
+    if( checkpointDir && checkpointDir[0] != '\0' )
+    {
+        logPath.AssignDir( wxString::FromUTF8( checkpointDir ) );
+    }
+    else
+    {
+        logPath.AssignDir( wxStandardPaths::Get().GetTempDir() );
+        logPath.AppendDir( wxS( "kicadgym" ) );
+    }
+
+    if( !PATHS::EnsurePathExists( logPath.GetPath() ) )
+        return;
+
+    logPath.SetFullName( wxS( "api-startup.log" ) );
+    wxFFile logFile( logPath.GetFullPath(), wxS( "a" ) );
+
+    if( logFile.IsOpened() )
+        logFile.Write( aMessage + wxS( "\n" ) );
+}
+
+
 wxString KICAD_API_SERVER::s_logFileName = "api.log";
 
 
@@ -55,13 +83,35 @@ KICAD_API_SERVER::KICAD_API_SERVER() :
         m_token( KIID().AsStdString() ),
         m_readyToReply( false )
 {
-    if( !Pgm().GetCommonSettings()->m_Api.enable_server )
+    const char* gymSessionId = std::getenv( "KICADGYM_SESSION_ID" );
+    const bool gymSession = gymSessionId && gymSessionId[0] != '\0';
+    logGymApiStartup( wxString::Format( wxS( "constructor gym_session=%d" ), gymSession ) );
+
+    if( gymSession )
     {
+        const char* gymPort = std::getenv( "KICAD_PORT" );
+
+        if( gymPort && gymPort[0] != '\0' )
+        {
+            const wxString port = wxString::FromUTF8( gymPort );
+            wxFileName socket;
+            socket.AssignDir( wxStandardPaths::Get().GetTempDir() );
+            socket.AppendDir( wxS( "kicadgym" ) );
+            socket.SetFullName( wxString::Format( wxS( "api-%s.sock" ), port ) );
+            m_socketPathOverride = socket.GetFullPath();
+        }
+    }
+
+    if( !gymSession && !Pgm().GetCommonSettings()->m_Api.enable_server )
+    {
+        logGymApiStartup( wxS( "disabled" ) );
         wxLogTrace( traceApi, "Server: disabled by user preferences." );
         return;
     }
 
     Start();
+    logGymApiStartup( wxString::Format( wxS( "started running=%d socket=%s" ), Running(),
+                                        wxString::FromUTF8( SocketPath() ) ) );
 }
 
 
@@ -77,16 +127,25 @@ void KICAD_API_SERVER::Start()
         return;
 
     wxFileName socket;
+
+    if( !m_socketPathOverride.IsEmpty() )
+    {
+        socket.Assign( m_socketPathOverride );
+    }
+    else
+    {
 #ifdef __WXMAC__
-    socket.AssignDir( wxS( "/tmp" ) );
+        socket.AssignDir( wxS( "/tmp" ) );
 #else
-    socket.AssignDir( wxStandardPaths::Get().GetTempDir() );
+        socket.AssignDir( wxStandardPaths::Get().GetTempDir() );
 #endif
-    socket.AppendDir( wxS( "kicad" ) );
-    socket.SetFullName( wxS( "api.sock" ) );
+        socket.AppendDir( wxS( "kicad" ) );
+        socket.SetFullName( wxS( "api.sock" ) );
+    }
 
     if( !PATHS::EnsurePathExists( socket.GetPath() ) )
     {
+        logGymApiStartup( wxS( "socket directory creation failed: " ) + socket.GetPath() );
         wxLogTrace( traceApi, wxString::Format( "Server: socket path %s could not be created",
                                                 socket.GetPath() ) );
         return;
@@ -128,6 +187,7 @@ void KICAD_API_SERVER::Start()
             fmt::format( "ipc://{}", socket.GetFullPath().ToStdString() ) );
     m_server->SetCallback( [&]( std::string* aRequest ) { onApiRequest( aRequest ); } );
 
+    logGymApiStartup( wxS( "listening: " ) + wxString::FromUTF8( m_server->SocketPath() ) );
     m_logFilePath.AssignDir( PATHS::GetLogsPath() );
     m_logFilePath.SetName( s_logFileName );
 
